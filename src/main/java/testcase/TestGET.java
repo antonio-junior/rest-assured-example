@@ -4,9 +4,9 @@ import static io.restassured.RestAssured.get;
 import static io.restassured.RestAssured.given;
 import static io.restassured.RestAssured.when;
 import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.hasItems;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.lessThan;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
@@ -17,26 +17,36 @@ import org.junit.Before;
 import org.junit.Test;
 
 import io.restassured.RestAssured;
+import io.restassured.builder.ResponseSpecBuilder;
+import io.restassured.filter.log.LogDetail;
 import io.restassured.http.ContentType;
 import io.restassured.http.Headers;
 import io.restassured.path.json.JsonPath;
 import io.restassured.response.Response;
+import io.restassured.specification.ResponseSpecification;
 
 public class TestGET {
+	
+	// Reusable response check
+	ResponseSpecification checkStatusCodeAndContentType = 
+		    new ResponseSpecBuilder().
+		        expectStatusCode(200).
+		        expectContentType(ContentType.JSON).log(LogDetail.PARAMS).
+		        build();
 	
 	@Before
 	public void before() {
 		RestAssured.baseURI = "https://jsonplaceholder.typicode.com";
 	}
 	
-	@Test
-	public void testExtractResponse() {
+	public void testExtractResponse(int id) {
 		Response response =
 			given()
 				.contentType(ContentType.JSON)
 			.when()
-				.get("/todos/1")
+				.get("/todos/"+id)
 			.then()
+			.spec(checkStatusCodeAndContentType)
 				.extract().response();
 
         assertEquals(200, response.statusCode());
@@ -78,8 +88,12 @@ public class TestGET {
 		.when()
 			.get("/todos/1")
 		.then()
-			.statusCode(is(200))
-			.body("userId", is(1));
+			.assertThat()
+				.contentType(ContentType.JSON)
+			.and()
+				.statusCode(is(200))
+			.and()
+				.body("userId", is(1));
 	}
 	
 	@Test
